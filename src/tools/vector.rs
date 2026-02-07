@@ -43,10 +43,34 @@ pub fn tools() -> Vec<ToolDef> {
         ),
         ToolDef::new(
             "strata_vector_search",
-            "Search for similar vectors. Returns top-k matches with scores.",
-            schema!(object {
-                required: { "collection": string, "query": array_number, "k": integer },
-                optional: { "filter": array_object, "metric": string }
+            "Search for similar vectors. Returns top-k matches with scores. \
+             Filters narrow results by metadata: each filter has field (metadata key), \
+             op (eq|ne|gt|gte|lt|lte|in|contains), and value.",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "collection": {"type": "string"},
+                    "query": {"type": "array", "items": {"type": "number"}},
+                    "k": {"type": "integer"},
+                    "filter": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "field": {"type": "string", "description": "Metadata field name"},
+                                "op": {
+                                    "type": "string",
+                                    "enum": ["eq", "ne", "gt", "gte", "lt", "lte", "in", "contains"],
+                                    "description": "Comparison operator"
+                                },
+                                "value": {"description": "Value to compare against"}
+                            },
+                            "required": ["field", "op", "value"]
+                        }
+                    },
+                    "metric": {"type": "string", "enum": ["cosine", "euclidean", "dot_product"]}
+                },
+                "required": ["collection", "query", "k"]
             }),
         ),
         ToolDef::new(

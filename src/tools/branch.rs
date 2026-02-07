@@ -7,7 +7,9 @@
 use serde_json::{Map, Value as JsonValue};
 use stratadb::{BranchId, Command, MergeStrategy};
 
-use crate::convert::{get_optional_string, get_optional_u64, get_string_arg, output_to_json};
+use crate::convert::{
+    get_optional_string, get_optional_u64, get_string_arg, json_to_value, output_to_json,
+};
 use crate::error::{McpError, Result};
 use crate::schema;
 use crate::session::McpSession;
@@ -19,9 +21,9 @@ pub fn tools() -> Vec<ToolDef> {
         ToolDef::new(
             "strata_branch_create",
             "Create a new empty branch for isolated development or experimentation. \
-             Optionally specify branch_id (name or UUID). Returns the new branch info.",
+             Optionally specify branch_id (name or UUID) and metadata. Returns the new branch info.",
             schema!(object {
-                optional: { "branch_id": string }
+                optional: { "branch_id": string, "metadata": any }
             }),
         ),
         ToolDef::new(
@@ -101,10 +103,14 @@ pub fn dispatch(
     match name {
         "strata_branch_create" => {
             let branch_id = get_optional_string(&args, "branch_id");
+            let metadata = match args.get("metadata") {
+                Some(serde_json::Value::Null) | None => None,
+                Some(v) => Some(json_to_value(v.clone())?),
+            };
 
             let cmd = Command::BranchCreate {
                 branch_id,
-                metadata: None,
+                metadata,
             };
             let output = session.execute(cmd)?;
             Ok(output_to_json(output))

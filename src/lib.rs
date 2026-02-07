@@ -7,7 +7,7 @@
 //!
 //! ## Features
 //!
-//! - **47 tools** covering all Strata primitives: KV, JSON, Event, State, Vector, Branch, Space, Transaction
+//! - **61 tools** covering all Strata primitives: KV, JSON, Event, State, Vector, Branch, Space, Transaction, Search, Bundle, Retention
 //! - **Session state**: Tracks current branch and space context across tool calls
 //! - **Transaction support**: ACID transactions via begin/commit/rollback tools
 //! - **Branch operations**: Fork, diff, and merge branches for data isolation

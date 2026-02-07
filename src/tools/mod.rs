@@ -8,6 +8,7 @@ pub mod database;
 pub mod event;
 pub mod json;
 pub mod kv;
+pub mod retention;
 pub mod search;
 pub mod space;
 pub mod state;
@@ -65,6 +66,7 @@ impl ToolRegistry {
         tools.extend(txn::tools());
         tools.extend(search::tools());
         tools.extend(bundle::tools());
+        tools.extend(retention::tools());
 
         Self { tools }
     }
@@ -104,6 +106,8 @@ impl ToolRegistry {
             search::dispatch(session, name, args)
         } else if name.starts_with("strata_bundle_") {
             bundle::dispatch(session, name, args)
+        } else if name.starts_with("strata_retention_") {
+            retention::dispatch(session, name, args)
         } else {
             Err(McpError::UnknownTool(name.to_string()))
         }

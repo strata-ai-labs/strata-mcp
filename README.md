@@ -2,7 +2,7 @@
 
 MCP (Model Context Protocol) server for [Strata](https://github.com/strata-systems/strata-core) database.
 
-Exposes 47 tools for AI agents to interact with Strata's six data primitives:
+Exposes 61 tools for AI agents to interact with Strata's six data primitives:
 KV Store, Event Log, State Cell, JSON Store, Vector Store, and Branches.
 
 ## Installation
@@ -17,7 +17,7 @@ cargo build --release
 
 The binary will be at `target/release/strata-mcp`.
 
-### From crates.io (coming soon)
+### From crates.io
 
 ```bash
 cargo install strata-mcp
@@ -59,17 +59,24 @@ For ephemeral/testing use (in-memory, no persistence):
 strata-mcp [OPTIONS]
 
 Options:
-  --db <PATH>     Path to the database directory
-  --cache         Use an in-memory database (no persistence)
-  --read-only     Open database in read-only mode
-  -v, --verbose   Enable debug logging to stderr
-  -h, --help      Print help
-  -V, --version   Print version
+  --db <PATH>       Path to the database directory
+  --cache           Use an in-memory database (no persistence)
+  --read-only       Open database in read-only mode
+  --auto-embed      Enable automatic text embedding for semantic search
+  -v, --verbose     Enable debug logging to stderr
+  -h, --help        Print help
+  -V, --version     Print version
 ```
 
-## Tools (47 total)
+### Read-Only Mode
 
-### Key-Value Store (5 tools)
+When `--read-only` is used, all write operations are rejected with an `ACCESS_DENIED` error.
+Read operations (get, list, search, info, etc.) work normally. This is useful for
+sharing a database safely with AI agents that should only read data.
+
+## Tools (61 total)
+
+### Key-Value Store (8 tools)
 
 | Tool | Description |
 |------|-------------|
@@ -78,6 +85,9 @@ Options:
 | `strata_kv_delete` | Delete a key |
 | `strata_kv_list` | List keys with optional prefix filter |
 | `strata_kv_history` | Get version history for a key |
+| `strata_kv_put_many` | Batch store multiple key-value pairs |
+| `strata_kv_get_many` | Batch get multiple keys |
+| `strata_kv_delete_many` | Batch delete multiple keys |
 
 ### JSON Document Store (5 tools)
 
@@ -117,7 +127,7 @@ Options:
 | `strata_vector_upsert` | Insert/update a vector |
 | `strata_vector_get` | Get a vector by key |
 | `strata_vector_delete` | Delete a vector |
-| `strata_vector_search` | Similarity search |
+| `strata_vector_search` | Similarity search with optional filters |
 | `strata_vector_create_collection` | Create a collection |
 | `strata_vector_delete_collection` | Delete a collection |
 | `strata_vector_list_collections` | List all collections |
@@ -128,7 +138,7 @@ Options:
 
 | Tool | Description |
 |------|-------------|
-| `strata_branch_create` | Create a new branch |
+| `strata_branch_create` | Create a new branch (with optional metadata) |
 | `strata_branch_get` | Get branch info |
 | `strata_branch_list` | List all branches |
 | `strata_branch_exists` | Check if branch exists |
@@ -138,12 +148,13 @@ Options:
 | `strata_branch_merge` | Merge branches |
 | `strata_branch_switch` | Switch current branch |
 
-### Space Management (4 tools)
+### Space Management (5 tools)
 
 | Tool | Description |
 |------|-------------|
 | `strata_space_list` | List spaces in branch |
 | `strata_space_create` | Create a space |
+| `strata_space_exists` | Check if space exists |
 | `strata_space_delete` | Delete a space |
 | `strata_space_switch` | Switch current space |
 
@@ -165,6 +176,26 @@ Options:
 | `strata_db_info` | Get database info |
 | `strata_db_flush` | Flush writes to disk |
 | `strata_db_compact` | Trigger compaction |
+
+### Search (1 tool)
+
+| Tool | Description |
+|------|-------------|
+| `strata_search` | Cross-primitive search with ranked results |
+
+### Bundle Operations (3 tools)
+
+| Tool | Description |
+|------|-------------|
+| `strata_bundle_export` | Export a branch to a bundle file |
+| `strata_bundle_import` | Import a branch from a bundle file |
+| `strata_bundle_validate` | Validate a bundle file |
+
+### Retention (1 tool)
+
+| Tool | Description |
+|------|-------------|
+| `strata_retention_apply` | Apply retention policy to trim old versions |
 
 ## Session State
 

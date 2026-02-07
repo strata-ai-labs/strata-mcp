@@ -3,7 +3,8 @@
 //! Wraps a stratadb Session with branch/space context, similar to the CLI's SessionState.
 
 use stratadb::{
-    BranchDiffResult, Command, ForkInfo, MergeInfo, MergeStrategy, Output, Session, Strata,
+    AccessMode, BranchDiffResult, Command, ForkInfo, MergeInfo, MergeStrategy, Output, Session,
+    Strata,
 };
 
 use crate::error::{McpError, Result};
@@ -39,6 +40,25 @@ impl McpSession {
         }
     }
 
+    /// Returns `true` if the database was opened in read-only mode.
+    pub fn is_read_only(&self) -> bool {
+        self.strata().access_mode() == AccessMode::ReadOnly
+    }
+
+    /// Reject write operations when the database is read-only.
+    fn check_write_access(&self, operation: &str) -> Result<()> {
+        if self.is_read_only() {
+            return Err(McpError::Strata {
+                code: "ACCESS_DENIED".to_string(),
+                message: format!(
+                    "access denied: {} rejected — database is read-only",
+                    operation
+                ),
+            });
+        }
+        Ok(())
+    }
+
     /// Get the current branch name.
     pub fn branch(&self) -> &str {
         &self.branch
@@ -50,6 +70,10 @@ impl McpSession {
     }
 
     /// Whether a transaction is currently active.
+    ///
+    /// Exposed for library consumers; the MCP server itself tracks transactions
+    /// via the `execute()` method's output matching.
+    #[allow(dead_code)]
     pub fn in_transaction(&self) -> bool {
         self.in_transaction
     }
@@ -85,8 +109,12 @@ impl McpSession {
 
     /// Execute a command via the session.
     ///
+    /// Rejects write commands when the database is read-only.
     /// Updates transaction state tracking based on output.
     pub fn execute(&mut self, cmd: Command) -> Result<Output> {
+        if cmd.is_write() {
+            self.check_write_access(cmd.name())?;
+        }
         let output = self.session.execute(cmd)?;
 
         // Track transaction state changes
@@ -101,6 +129,7 @@ impl McpSession {
 
     /// Fork the current branch to a new branch.
     pub fn fork_branch(&self, destination: &str) -> Result<ForkInfo> {
+        self.check_write_access("BranchFork")?;
         self.strata
             .branches()
             .fork(&self.branch, destination)
@@ -117,6 +146,7 @@ impl McpSession {
 
     /// Merge a source branch into the current branch.
     pub fn merge_branch(&self, source: &str, strategy: MergeStrategy) -> Result<MergeInfo> {
+        self.check_write_access("BranchMerge")?;
         self.strata
             .branches()
             .merge(source, &self.branch, strategy)
@@ -125,12 +155,12 @@ impl McpSession {
 
     /// Get the current branch ID for use in commands.
     pub fn branch_id(&self) -> Option<stratadb::BranchId> {
-        Some(self.branch.clone().into())
+        Some(self.branch().to_string().into())
     }
 
     /// Get the current space for use in commands.
     pub fn space_id(&self) -> Option<String> {
-        Some(self.space.clone())
+        Some(self.space().to_string())
     }
 
     /// Get a reference to the underlying Strata database.

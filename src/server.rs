@@ -5,7 +5,6 @@
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value as JsonValue};
 use std::io::{BufRead, Write};
-use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 
 use crate::error::{rpc_codes, McpError, Result};
 use crate::session::McpSession;
@@ -21,9 +20,13 @@ const SERVER_VERSION: &str = env!("CARGO_PKG_VERSION");
 /// JSON-RPC 2.0 request.
 #[derive(Debug, Deserialize)]
 pub struct JsonRpcRequest {
+    /// JSON-RPC protocol version (must be "2.0").
     pub jsonrpc: String,
+    /// Request identifier, used to correlate responses.
     pub id: Option<JsonValue>,
+    /// The RPC method name to invoke.
     pub method: String,
+    /// Optional parameters for the method.
     #[serde(default)]
     pub params: Option<JsonValue>,
 }
@@ -31,11 +34,15 @@ pub struct JsonRpcRequest {
 /// JSON-RPC 2.0 response.
 #[derive(Debug, Serialize)]
 pub struct JsonRpcResponse {
+    /// JSON-RPC protocol version (always "2.0").
     pub jsonrpc: String,
+    /// Request identifier this response corresponds to.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<JsonValue>,
+    /// The result value on success.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub result: Option<JsonValue>,
+    /// The error object on failure.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<JsonRpcError>,
 }
@@ -43,8 +50,11 @@ pub struct JsonRpcResponse {
 /// JSON-RPC 2.0 error object.
 #[derive(Debug, Serialize)]
 pub struct JsonRpcError {
+    /// Numeric error code per JSON-RPC specification.
     pub code: i32,
+    /// Human-readable error message.
     pub message: String,
+    /// Optional structured error data.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub data: Option<JsonValue>,
 }
@@ -97,48 +107,7 @@ impl McpServer {
         }
     }
 
-    /// Run the server, reading from stdin and writing to stdout.
-    pub async fn run(&mut self) -> Result<()> {
-        let stdin = tokio::io::stdin();
-        let mut stdout = tokio::io::stdout();
-        let mut reader = BufReader::new(stdin);
-        let mut line = String::new();
-
-        loop {
-            line.clear();
-            let bytes_read = reader.read_line(&mut line).await?;
-
-            if bytes_read == 0 {
-                // EOF - client disconnected
-                break;
-            }
-
-            let line = line.trim();
-            if line.is_empty() {
-                continue;
-            }
-
-            // Parse the request
-            let response = match serde_json::from_str::<JsonRpcRequest>(line) {
-                Ok(request) => self.handle_request(request),
-                Err(e) => JsonRpcResponse::error(
-                    None,
-                    rpc_codes::PARSE_ERROR,
-                    format!("Parse error: {}", e),
-                ),
-            };
-
-            // Send response
-            let response_json = serde_json::to_string(&response)?;
-            stdout.write_all(response_json.as_bytes()).await?;
-            stdout.write_all(b"\n").await?;
-            stdout.flush().await?;
-        }
-
-        Ok(())
-    }
-
-    /// Run the server synchronously (for non-tokio environments).
+    /// Run the server synchronously, reading from stdin and writing to stdout.
     pub fn run_sync(&mut self) -> Result<()> {
         let stdin = std::io::stdin();
         let mut stdout = std::io::stdout();
