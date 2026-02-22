@@ -1,10 +1,10 @@
 [package]
 name = "strata-mcp"
-version = "0.5.3"
+version = "0.6.0"
 edition = "2021"
 description = "MCP server for Strata database"
 license = "MIT"
-repository = "https://github.com/strata-systems/strata-mcp"
+repository = "https://github.com/strata-ai-labs/strata-mcp"
 readme = "README.md"
 keywords = ["mcp", "database", "ai", "agents", "strata"]
 categories = ["database", "development-tools"]
@@ -18,12 +18,13 @@ default = ["embed"]
 embed = ["stratadb/embed", "dep:strata-intelligence"]
 
 [dependencies]
-# Use git dependency during development, switch to crates.io version on release
-stratadb = { git = "https://github.com/stratadb-labs/strata-core", branch = "main" }
-# stratadb = "0.5"  # Uncomment when published to crates.io
+# Use path dependency for local development
+stratadb = { path = "../strata-core" }
+# stratadb = { git = "https://github.com/strata-ai-labs/strata-core", branch = "main" }
 
 # Intelligence crate for model download (embed feature only)
-strata-intelligence = { git = "https://github.com/stratadb-labs/strata-core", branch = "main", features = ["embed"], optional = true }
+strata-intelligence = { path = "../strata-core/crates/intelligence", features = ["embed"], optional = true }
+# strata-intelligence = { git = "https://github.com/strata-ai-labs/strata-core", branch = "main", features = ["embed"], optional = true }
 
 clap = { version = "4", features = ["derive"] }
 serde = { version = "1.0", features = ["derive"] }

@@ -251,6 +251,147 @@ pub fn output_to_json(output: Output) -> JsonValue {
                 "latest_ts": latest_ts,
             })
         }
+
+        Output::BatchResults(results) => {
+            let arr: Vec<JsonValue> = results
+                .into_iter()
+                .map(|r| {
+                    serde_json::json!({
+                        "version": r.version,
+                        "error": r.error,
+                    })
+                })
+                .collect();
+            JsonValue::Array(arr)
+        }
+
+        Output::DurabilityCounters(counters) => {
+            serde_json::json!({
+                "wal_appends": counters.wal_appends,
+                "sync_calls": counters.sync_calls,
+                "bytes_written": counters.bytes_written,
+                "sync_nanos": counters.sync_nanos,
+            })
+        }
+
+        Output::EmbedStatus(info) => {
+            let is_idle = info.pending == 0
+                && info.scheduler_active_tasks == 0
+                && info.scheduler_queue_depth == 0;
+            serde_json::json!({
+                "auto_embed": info.auto_embed,
+                "batch_size": info.batch_size,
+                "pending": info.pending,
+                "total_queued": info.total_queued,
+                "total_embedded": info.total_embedded,
+                "total_failed": info.total_failed,
+                "scheduler_queue_depth": info.scheduler_queue_depth,
+                "scheduler_active_tasks": info.scheduler_active_tasks,
+                "is_idle": is_idle,
+            })
+        }
+
+        Output::Embedding(vec) => {
+            JsonValue::Array(vec.into_iter().map(|f| serde_json::json!(f)).collect())
+        }
+
+        Output::Embeddings(vecs) => {
+            let arr: Vec<JsonValue> = vecs
+                .into_iter()
+                .map(|vec| JsonValue::Array(vec.into_iter().map(|f| serde_json::json!(f)).collect()))
+                .collect();
+            JsonValue::Array(arr)
+        }
+
+        Output::Generated(result) => {
+            serde_json::json!({
+                "text": result.text,
+                "stop_reason": result.stop_reason,
+                "prompt_tokens": result.prompt_tokens,
+                "completion_tokens": result.completion_tokens,
+                "model": result.model,
+            })
+        }
+
+        Output::TokenIds(result) => {
+            serde_json::json!({
+                "ids": result.ids,
+                "count": result.count,
+                "model": result.model,
+            })
+        }
+
+        Output::Text(text) => {
+            serde_json::json!({ "text": text })
+        }
+
+        Output::ModelsList(models) => {
+            let arr: Vec<JsonValue> = models
+                .into_iter()
+                .map(|m| {
+                    serde_json::json!({
+                        "name": m.name,
+                        "task": m.task,
+                        "architecture": m.architecture,
+                        "default_quant": m.default_quant,
+                        "embedding_dim": m.embedding_dim,
+                        "is_local": m.is_local,
+                        "size_bytes": m.size_bytes,
+                    })
+                })
+                .collect();
+            JsonValue::Array(arr)
+        }
+
+        Output::ModelsPulled { name, path } => {
+            serde_json::json!({
+                "name": name,
+                "path": path,
+            })
+        }
+
+        Output::BranchForked(info) => {
+            serde_json::json!({
+                "source": info.source,
+                "destination": info.destination,
+                "keys_copied": info.keys_copied,
+            })
+        }
+
+        Output::BranchDiff(diff) => {
+            serde_json::json!({
+                "branch_a": diff.branch_a,
+                "branch_b": diff.branch_b,
+                "summary": {
+                    "total_added": diff.summary.total_added,
+                    "total_removed": diff.summary.total_removed,
+                    "total_modified": diff.summary.total_modified,
+                },
+            })
+        }
+
+        Output::BranchMerged(info) => {
+            serde_json::json!({
+                "keys_applied": info.keys_applied,
+                "spaces_merged": info.spaces_merged,
+                "conflicts": info.conflicts.into_iter().map(|c| {
+                    serde_json::json!({ "key": c.key, "space": c.space })
+                }).collect::<Vec<_>>(),
+            })
+        }
+
+        Output::Config(cfg) => {
+            serde_json::json!({
+                "durability": cfg.durability,
+                "auto_embed": cfg.auto_embed,
+                "model": cfg.model.map(|m| serde_json::json!({
+                    "endpoint": m.endpoint,
+                    "model": m.model,
+                    "api_key": m.api_key,
+                    "timeout_ms": m.timeout_ms,
+                })),
+            })
+        }
     }
 }
 

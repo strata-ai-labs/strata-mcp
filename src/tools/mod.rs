@@ -6,9 +6,13 @@ pub mod branch;
 pub mod bundle;
 pub mod config;
 pub mod database;
+pub mod durability;
+pub mod embed;
 pub mod event;
+pub mod inference;
 pub mod json;
 pub mod kv;
+pub mod models;
 pub mod retention;
 pub mod search;
 pub mod space;
@@ -69,6 +73,10 @@ impl ToolRegistry {
         tools.extend(bundle::tools());
         tools.extend(retention::tools());
         tools.extend(config::tools());
+        tools.extend(embed::tools());
+        tools.extend(inference::tools());
+        tools.extend(models::tools());
+        tools.extend(durability::tools());
 
         Self { tools }
     }
@@ -112,6 +120,14 @@ impl ToolRegistry {
             bundle::dispatch(session, name, args)
         } else if name.starts_with("strata_retention_") {
             retention::dispatch(session, name, args)
+        } else if name.starts_with("strata_embed") {
+            embed::dispatch(session, name, args)
+        } else if name.starts_with("strata_generate") || name.starts_with("strata_tokenize") || name.starts_with("strata_detokenize") {
+            inference::dispatch(session, name, args)
+        } else if name.starts_with("strata_models_") {
+            models::dispatch(session, name, args)
+        } else if name.starts_with("strata_durability_") {
+            durability::dispatch(session, name, args)
         } else {
             Err(McpError::UnknownTool(name.to_string()))
         }
