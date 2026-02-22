@@ -32,12 +32,14 @@ pub fn tools() -> Vec<ToolDef> {
         // ── Core Data Tools ──────────────────────────────────────────────
         ToolDef::new(
             "strata_store",
-            "Store data with a key. The value can be any type (string, number, boolean, object, \
-             or array). Use path to update a specific field within an existing document (JSONPath \
-             syntax, e.g. '$.settings.theme') — omit path to store the entire value. When \
-             auto-embed is enabled, text content is automatically indexed for semantic search \
-             via strata_search. Overwrites existing data at the given path. Returns the version \
-             number.",
+            "Store a JSON document by key. Use this whenever you need to persist structured data — \
+             configuration, user profiles, conversation state, analysis results, or any data you'll \
+             need later. The value can be any JSON type (string, number, boolean, object, array). Use \
+             the optional 'path' parameter with JSONPath syntax (e.g. '$.settings.theme') to update a \
+             specific nested field without overwriting the whole document — omit 'path' to store the \
+             entire value. Every write is versioned — nothing is ever lost. When auto-embed is enabled, \
+             text content is automatically indexed for semantic search via strata_search. \
+             Returns { key, version, stored: true }.",
             schema!(object {
                 required: { "key": string, "value": any },
                 optional: { "path": string }
@@ -45,10 +47,11 @@ pub fn tools() -> Vec<ToolDef> {
         ),
         ToolDef::new(
             "strata_recall",
-            "Retrieve data by key. Returns the stored value with version info, or null if the \
-             key doesn't exist. Use path to read a specific field (JSONPath syntax, e.g. \
-             '$.settings.theme') — omit path to get the entire document. Pass as_of \
-             (microsecond timestamp) to see what this key contained at a past point in time.",
+            "Retrieve a document by key. Returns the stored value with version metadata, or null if \
+             the key doesn't exist. Use 'path' with JSONPath syntax (e.g. '$.settings.theme') to read \
+             a specific nested field — omit to get the entire document. Pass 'as_of' (microsecond \
+             timestamp) to read what this key contained at any past point in time — every write is \
+             versioned and nothing is lost. Returns { value, version, timestamp } or null.",
             schema!(object {
                 required: { "key": string },
                 optional: { "path": string, "as_of": integer }
@@ -56,10 +59,12 @@ pub fn tools() -> Vec<ToolDef> {
         ),
         ToolDef::new(
             "strata_search",
-            "Search across all stored data using natural language. Returns ranked results with \
-             relevance scores and text snippets. Uses keyword matching by default; adds semantic \
-             similarity when auto-embed is enabled. Use this when you need to find data but don't \
-             know the exact key.",
+            "Find relevant data across everything stored using natural language. Use this when you \
+             don't know the exact key — describe what you're looking for and get ranked results. \
+             Searches across all documents and events simultaneously. Uses fast keyword matching \
+             (BM25) by default; adds semantic similarity when auto-embed is enabled. Returns an \
+             array of { key, score, snippet } ranked by relevance. Use 'k' to control how many \
+             results to return (default 10).",
             schema!(object {
                 required: { "query": string },
                 optional: { "k": integer }
@@ -67,17 +72,22 @@ pub fn tools() -> Vec<ToolDef> {
         ),
         ToolDef::new(
             "strata_forget",
-            "Delete data by key. Returns true if the key existed, false otherwise.",
+            "Delete a document by key. Returns { deleted: true } if the key existed, { deleted: false } \
+             otherwise. The deletion itself is versioned — you can still see the document's history via \
+             strata_history, and time-travel queries via strata_recall with 'as_of' will still return \
+             the value as it existed before deletion.",
             schema!(object {
                 required: { "key": string }
             }),
         ),
         ToolDef::new(
             "strata_log",
-            "Append an immutable event to the log. Events are ordered, timestamped, and grouped \
-             by type. Unlike strata_store, events cannot be overwritten — they form a permanent, \
-             append-only record. Use for recording actions, observations, decisions, or any \
-             sequential data.",
+            "Append an immutable event to the log. Use this for recording actions, decisions, \
+             observations, errors, or any sequential data that should never be modified after the fact. \
+             Unlike strata_store, events cannot be overwritten or deleted — they form a permanent, \
+             ordered, timestamped record grouped by event type. The 'event' parameter is the type tag \
+             (e.g. \"user_action\", \"error\", \"decision\") and 'data' is any JSON payload. Returns \
+             { sequence, logged: true }.",
             schema!(object {
                 required: { "event": string, "data": any }
             }),
@@ -85,11 +95,14 @@ pub fn tools() -> Vec<ToolDef> {
         // ── Power Tools ──────────────────────────────────────────────────
         ToolDef::new(
             "strata_branch",
-            "Manage branches for safe experimentation. Branches are instant, copy-on-write \
-             snapshots of all data. Actions: 'create' a new empty branch, 'switch' to a branch, \
-             'list' all branches, 'fork' the current branch (copies all data), 'merge' another \
-             branch into current, 'diff' to compare current branch against another, 'delete' a \
-             branch. The recommended workflow: fork → experiment → merge (or delete to discard).",
+            "Manage branches for isolated, parallel workstreams. Branches are instant copy-on-write \
+             snapshots of all data — like git branches but for your entire database. Use 'fork' before \
+             risky experiments, 'merge' to apply results back, or 'diff' to compare. Actions: 'create' \
+             (empty branch), 'switch' (change active branch), 'list' (all branches), 'fork' (copy \
+             current branch with all data), 'merge' (apply source branch into current), 'diff' (compare \
+             current vs another), 'delete' (remove branch). Recommended workflow: fork → experiment → \
+             merge if good, delete if bad. Params: 'name' for create/switch/fork/delete, 'source' for \
+             merge, 'compare' for diff.",
             serde_json::json!({
                 "type": "object",
                 "properties": {
@@ -116,18 +129,20 @@ pub fn tools() -> Vec<ToolDef> {
         ),
         ToolDef::new(
             "strata_history",
-            "View version history for a key, or get the time range available for time-travel \
-             queries. With a key: returns all historical values with versions and timestamps \
-             (useful for undo or audit). Without a key: returns the oldest and latest timestamps \
-             for the current branch.",
+            "View the complete version history of a key, or discover the time range available for \
+             time-travel. With 'key': returns every historical version with values, version numbers, \
+             and timestamps — useful for undo, audit, or understanding how data evolved. Without 'key': \
+             returns the oldest and latest timestamps on the current branch, so you know the full range \
+             available for 'as_of' queries in strata_recall.",
             schema!(object {
                 optional: { "key": string, "as_of": integer }
             }),
         ),
         ToolDef::new(
             "strata_status",
-            "Get database status including current branch, version, auto-embed state, branch \
-             count, and key count. Use this to orient yourself at the start of a session.",
+            "Get database status. Returns current branch name, namespace, version, branch count, key \
+             count, uptime, and whether auto-embed is active. Use this to orient yourself — especially \
+             at the start of a session to understand what branch you're on and what data exists.",
             schema!(object {}),
         ),
     ]

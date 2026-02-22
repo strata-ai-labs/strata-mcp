@@ -128,6 +128,26 @@ Research across 26 MCP servers (Qdrant, Neon, Supabase, MongoDB, Mem0, etc.) sho
 
 Strata's 8 tools are modeled after Qdrant (2 tools, the gold standard for AI-friendliness), extended with branches and time-travel — Strata's unique differentiators.
 
+## Claude Code Skill
+
+The `/strata` skill teaches Claude Code what Strata is and when to use each tool. It triggers automatically when you mention storing, searching, branching, or persisting data.
+
+### Installation
+
+Copy the skill into your project or global Claude Code config:
+
+```bash
+# Per-project (recommended)
+mkdir -p .claude/skills/strata
+cp /path/to/strata-mcp/.claude/skills/strata/SKILL.md .claude/skills/strata/
+
+# Global (available in all projects)
+mkdir -p ~/.claude/skills/strata
+cp /path/to/strata-mcp/.claude/skills/strata/SKILL.md ~/.claude/skills/strata/
+```
+
+Once installed, Claude Code will use `/strata` automatically when relevant, or you can invoke it directly with `/strata [action or question]`.
+
 ## Read-Only Mode
 
 When `--read-only` is used, all write operations are rejected with an `ACCESS_DENIED` error.
