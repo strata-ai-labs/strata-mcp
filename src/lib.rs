@@ -5,12 +5,11 @@
 //! This crate provides an MCP server that exposes Strata database operations as tools
 //! for AI agents. It implements the MCP protocol over stdin/stdout using JSON-RPC 2.0.
 //!
-//! ## Features
+//! ## 8 Agent-Friendly Tools
 //!
-//! - **61 tools** covering all Strata primitives: KV, JSON, Event, State, Vector, Branch, Space, Transaction, Search, Bundle, Retention
-//! - **Session state**: Tracks current branch and space context across tool calls
-//! - **Transaction support**: ACID transactions via begin/commit/rollback tools
-//! - **Branch operations**: Fork, diff, and merge branches for data isolation
+//! `store`, `recall`, `search`, `forget`, `log`, `branch`, `history`, `status`
+//!
+//! Backed by Strata's JSON document store with automatic semantic search indexing.
 //!
 //! ## Usage
 //!
@@ -21,7 +20,7 @@
 //!   "mcpServers": {
 //!     "strata": {
 //!       "command": "/path/to/strata-mcp",
-//!       "args": ["--db", "/path/to/data"]
+//!       "args": ["--db", "/path/to/data", "--auto-embed"]
 //!     }
 //!   }
 //! }

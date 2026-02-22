@@ -80,7 +80,7 @@ fn extract_value(result: &JsonValue) -> &JsonValue {
 #[test]
 fn test_db_ping() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     let result = call_tool(&mut session, &registry, "strata_db_ping", json!({}));
     assert!(result.get("pong").is_some());
@@ -89,7 +89,7 @@ fn test_db_ping() {
 #[test]
 fn test_db_info() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     let result = call_tool(&mut session, &registry, "strata_db_info", json!({}));
     assert!(result.get("version").is_some());
@@ -99,7 +99,7 @@ fn test_db_info() {
 #[test]
 fn test_db_flush() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     let result = call_tool(&mut session, &registry, "strata_db_flush", json!({}));
     assert_eq!(result, json!(null));
@@ -108,7 +108,7 @@ fn test_db_flush() {
 #[test]
 fn test_db_compact() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     let result = call_tool(&mut session, &registry, "strata_db_compact", json!({}));
     assert_eq!(result, json!(null));
@@ -121,7 +121,7 @@ fn test_db_compact() {
 #[test]
 fn test_kv_put_get() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     let result = call_tool(
         &mut session,
@@ -143,7 +143,7 @@ fn test_kv_put_get() {
 #[test]
 fn test_kv_delete() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     call_tool(
         &mut session,
@@ -172,7 +172,7 @@ fn test_kv_delete() {
 #[test]
 fn test_kv_list() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     call_tool(&mut session, &registry, "strata_kv_put", json!({"key": "user:1", "value": "alice"}));
     call_tool(&mut session, &registry, "strata_kv_put", json!({"key": "user:2", "value": "bob"}));
@@ -190,7 +190,7 @@ fn test_kv_list() {
 #[test]
 fn test_kv_history() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     call_tool(&mut session, &registry, "strata_kv_put", json!({"key": "evolving", "value": 1}));
     call_tool(&mut session, &registry, "strata_kv_put", json!({"key": "evolving", "value": 2}));
@@ -204,7 +204,7 @@ fn test_kv_history() {
 #[test]
 fn test_kv_put_many_get_many() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     let result = call_tool(
         &mut session,
@@ -233,7 +233,7 @@ fn test_kv_put_many_get_many() {
 #[test]
 fn test_kv_delete_many() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     call_tool(&mut session, &registry, "strata_kv_put", json!({"key": "dm:1", "value": 1}));
     call_tool(&mut session, &registry, "strata_kv_put", json!({"key": "dm:2", "value": 2}));
@@ -257,7 +257,7 @@ fn test_kv_delete_many() {
 #[test]
 fn test_state_set_get() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     let result = call_tool(
         &mut session,
@@ -279,7 +279,7 @@ fn test_state_set_get() {
 #[test]
 fn test_state_init() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     call_tool(
         &mut session,
@@ -300,7 +300,7 @@ fn test_state_init() {
 #[test]
 fn test_state_delete() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     call_tool(&mut session, &registry, "strata_state_set", json!({"cell": "temp", "value": 1}));
     let result = call_tool(&mut session, &registry, "strata_state_delete", json!({"cell": "temp"}));
@@ -313,7 +313,7 @@ fn test_state_delete() {
 #[test]
 fn test_state_list() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     call_tool(&mut session, &registry, "strata_state_set", json!({"cell": "cfg:a", "value": 1}));
     call_tool(&mut session, &registry, "strata_state_set", json!({"cell": "cfg:b", "value": 2}));
@@ -326,7 +326,7 @@ fn test_state_list() {
 #[test]
 fn test_state_cas() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     let v = call_tool(&mut session, &registry, "strata_state_set", json!({"cell": "lock", "value": "free"}));
     let version = v.get("version").and_then(|v| v.as_u64()).unwrap();
@@ -345,7 +345,7 @@ fn test_state_cas() {
 #[test]
 fn test_state_history() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     call_tool(&mut session, &registry, "strata_state_set", json!({"cell": "ver", "value": 1}));
     call_tool(&mut session, &registry, "strata_state_set", json!({"cell": "ver", "value": 2}));
@@ -362,7 +362,7 @@ fn test_state_history() {
 #[test]
 fn test_event_append_get() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     let result = call_tool(
         &mut session,
@@ -379,7 +379,7 @@ fn test_event_append_get() {
 #[test]
 fn test_event_get_by_sequence() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     call_tool(
         &mut session,
@@ -395,7 +395,7 @@ fn test_event_get_by_sequence() {
 #[test]
 fn test_event_list_by_type() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     call_tool(&mut session, &registry, "strata_event_append", json!({"event_type": "a", "payload": {"n": 1}}));
     call_tool(&mut session, &registry, "strata_event_append", json!({"event_type": "b", "payload": {"n": 2}}));
@@ -409,7 +409,7 @@ fn test_event_list_by_type() {
 #[test]
 fn test_event_list_paginated() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     for i in 0..5 {
         call_tool(&mut session, &registry, "strata_event_append", json!({"event_type": "pg", "payload": {"i": i}}));
@@ -432,7 +432,7 @@ fn test_event_list_paginated() {
 #[test]
 fn test_json_set_get() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     call_tool(
         &mut session,
@@ -462,7 +462,7 @@ fn test_json_set_get() {
 #[test]
 fn test_json_delete() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     call_tool(&mut session, &registry, "strata_json_set", json!({"key": "temp", "path": "$", "value": 42}));
     let result = call_tool(&mut session, &registry, "strata_json_delete", json!({"key": "temp", "path": "$"}));
@@ -472,7 +472,7 @@ fn test_json_delete() {
 #[test]
 fn test_json_list() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     call_tool(&mut session, &registry, "strata_json_set", json!({"key": "doc:a", "path": "$", "value": 1}));
     call_tool(&mut session, &registry, "strata_json_set", json!({"key": "doc:b", "path": "$", "value": 2}));
@@ -485,7 +485,7 @@ fn test_json_list() {
 #[test]
 fn test_json_history() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     call_tool(&mut session, &registry, "strata_json_set", json!({"key": "versioned", "path": "$", "value": "v1"}));
     call_tool(&mut session, &registry, "strata_json_set", json!({"key": "versioned", "path": "$", "value": "v2"}));
@@ -502,7 +502,7 @@ fn test_json_history() {
 #[test]
 fn test_branch_create_list() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     let result = call_tool(
         &mut session,
@@ -528,7 +528,7 @@ fn test_branch_create_list() {
 #[test]
 fn test_branch_create_with_metadata() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     let result = call_tool(
         &mut session,
@@ -542,7 +542,7 @@ fn test_branch_create_with_metadata() {
 #[test]
 fn test_branch_switch() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     call_tool(&mut session, &registry, "strata_branch_create", json!({"branch_id": "feature"}));
     call_tool(&mut session, &registry, "strata_kv_put", json!({"key": "x", "value": 1}));
@@ -561,7 +561,7 @@ fn test_branch_switch() {
 #[test]
 fn test_branch_fork() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     call_tool(&mut session, &registry, "strata_kv_put", json!({"key": "shared", "value": "original"}));
 
@@ -576,7 +576,7 @@ fn test_branch_fork() {
 #[test]
 fn test_branch_get() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     let result = call_tool(&mut session, &registry, "strata_branch_get", json!({"branch": "default"}));
     assert_eq!(result.get("id").and_then(|v| v.as_str()), Some("default"));
@@ -587,7 +587,7 @@ fn test_branch_get() {
 #[test]
 fn test_branch_delete() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     call_tool(&mut session, &registry, "strata_branch_create", json!({"branch_id": "to-delete"}));
     call_tool(&mut session, &registry, "strata_branch_delete", json!({"branch": "to-delete"}));
@@ -599,7 +599,7 @@ fn test_branch_delete() {
 #[test]
 fn test_branch_diff() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     call_tool(&mut session, &registry, "strata_kv_put", json!({"key": "a", "value": 1}));
     call_tool(&mut session, &registry, "strata_branch_create", json!({"branch_id": "diff-target"}));
@@ -616,7 +616,7 @@ fn test_branch_diff() {
 #[test]
 fn test_branch_merge() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     call_tool(&mut session, &registry, "strata_branch_create", json!({"branch_id": "merge-src"}));
     call_tool(&mut session, &registry, "strata_branch_switch", json!({"branch": "merge-src"}));
@@ -639,7 +639,7 @@ fn test_branch_merge() {
 #[test]
 fn test_space_operations() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     call_tool(&mut session, &registry, "strata_space_create", json!({"space": "my-space"}));
 
@@ -658,7 +658,7 @@ fn test_space_operations() {
 #[test]
 fn test_space_exists() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     let result = call_tool(&mut session, &registry, "strata_space_exists", json!({"space": "default"}));
     assert_eq!(result, json!(true));
@@ -670,7 +670,7 @@ fn test_space_exists() {
 #[test]
 fn test_space_delete() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     call_tool(&mut session, &registry, "strata_space_create", json!({"space": "to-remove"}));
     call_tool(&mut session, &registry, "strata_space_delete", json!({"space": "to-remove", "force": true}));
@@ -686,7 +686,7 @@ fn test_space_delete() {
 #[test]
 fn test_vector_operations() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     call_tool(
         &mut session,
@@ -728,7 +728,7 @@ fn test_vector_operations() {
 #[test]
 fn test_vector_get() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     call_tool(&mut session, &registry, "strata_vector_create_collection", json!({"collection": "vget", "dimension": 3}));
     call_tool(&mut session, &registry, "strata_vector_upsert", json!({"collection": "vget", "key": "k1", "vector": [1.0, 2.0, 3.0], "metadata": {"label": "test"}}));
@@ -741,7 +741,7 @@ fn test_vector_get() {
 #[test]
 fn test_vector_delete() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     call_tool(&mut session, &registry, "strata_vector_create_collection", json!({"collection": "vdel", "dimension": 2}));
     call_tool(&mut session, &registry, "strata_vector_upsert", json!({"collection": "vdel", "key": "k1", "vector": [1.0, 2.0]}));
@@ -756,7 +756,7 @@ fn test_vector_delete() {
 #[test]
 fn test_vector_delete_collection() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     call_tool(&mut session, &registry, "strata_vector_create_collection", json!({"collection": "temp_coll", "dimension": 2}));
     let result = call_tool(&mut session, &registry, "strata_vector_delete_collection", json!({"collection": "temp_coll"}));
@@ -766,7 +766,7 @@ fn test_vector_delete_collection() {
 #[test]
 fn test_vector_stats() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     call_tool(&mut session, &registry, "strata_vector_create_collection", json!({"collection": "stats_coll", "dimension": 4}));
     call_tool(&mut session, &registry, "strata_vector_upsert", json!({"collection": "stats_coll", "key": "s1", "vector": [1.0, 0.0, 0.0, 0.0]}));
@@ -785,7 +785,7 @@ fn test_vector_stats() {
 #[test]
 fn test_vector_batch_upsert() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     call_tool(&mut session, &registry, "strata_vector_create_collection", json!({"collection": "batch", "dimension": 2}));
 
@@ -805,7 +805,7 @@ fn test_vector_batch_upsert() {
 #[test]
 fn test_vector_search_filtered() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     call_tool(&mut session, &registry, "strata_vector_create_collection", json!({"collection": "filtered", "dimension": 2}));
     call_tool(&mut session, &registry, "strata_vector_upsert", json!({"collection": "filtered", "key": "f1", "vector": [1.0, 0.0], "metadata": {"color": "red"}}));
@@ -834,7 +834,7 @@ fn test_vector_search_filtered() {
 #[test]
 fn test_transaction_commit() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     let result = call_tool(&mut session, &registry, "strata_txn_begin", json!({}));
     assert_eq!(result.get("status").and_then(|v| v.as_str()), Some("begun"));
@@ -854,7 +854,7 @@ fn test_transaction_commit() {
 #[test]
 fn test_transaction_rollback() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     call_tool(&mut session, &registry, "strata_kv_put", json!({"key": "rollback-key", "value": "initial"}));
 
@@ -871,7 +871,7 @@ fn test_transaction_rollback() {
 #[test]
 fn test_transaction_info() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     // No active transaction
     let result = call_tool(&mut session, &registry, "strata_txn_info", json!({}));
@@ -889,7 +889,7 @@ fn test_transaction_info() {
 #[test]
 fn test_transaction_read_only() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     call_tool(&mut session, &registry, "strata_txn_begin", json!({"read_only": true}));
     let result = call_tool(&mut session, &registry, "strata_txn_active", json!({}));
@@ -905,7 +905,7 @@ fn test_transaction_read_only() {
 #[test]
 fn test_bundle_export_import() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     // Create a separate branch for export to avoid "default already exists" on import
     call_tool(&mut session, &registry, "strata_branch_create", json!({"branch_id": "export-branch"}));
@@ -955,7 +955,7 @@ fn test_bundle_export_import() {
 #[test]
 fn test_retention_apply() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     let result = call_tool(&mut session, &registry, "strata_retention_apply", json!({}));
     assert_eq!(result, json!(null));
@@ -968,7 +968,7 @@ fn test_retention_apply() {
 #[test]
 fn test_search() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     call_tool(&mut session, &registry, "strata_kv_put", json!({"key": "search-key", "value": "searchable text content"}));
 
@@ -985,7 +985,7 @@ fn test_search() {
 #[test]
 fn test_search_empty_database() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     let result = call_tool(
         &mut session,
@@ -999,7 +999,7 @@ fn test_search_empty_database() {
 #[test]
 fn test_search_with_primitives_filter() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     call_tool(&mut session, &registry, "strata_kv_put", json!({"key": "k1", "value": "data"}));
 
@@ -1015,7 +1015,7 @@ fn test_search_with_primitives_filter() {
 #[test]
 fn test_search_with_mode() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     let result = call_tool(
         &mut session,
@@ -1029,7 +1029,7 @@ fn test_search_with_mode() {
 #[test]
 fn test_search_with_expand_rerank_disabled() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     let result = call_tool(
         &mut session,
@@ -1043,7 +1043,7 @@ fn test_search_with_expand_rerank_disabled() {
 #[test]
 fn test_search_with_time_range() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     let result = call_tool(
         &mut session,
@@ -1060,7 +1060,7 @@ fn test_search_with_time_range() {
 #[test]
 fn test_search_with_all_options() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     let result = call_tool(
         &mut session,
@@ -1085,7 +1085,7 @@ fn test_search_with_all_options() {
 #[test]
 fn test_read_only_rejects_writes() {
     let mut session = read_only_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     // Read should work
     let result = call_tool(&mut session, &registry, "strata_kv_get", json!({"key": "test"}));
@@ -1109,7 +1109,7 @@ fn test_read_only_rejects_writes() {
 #[test]
 fn test_read_only_allows_reads() {
     let mut session = read_only_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     // All read operations should work
     call_tool(&mut session, &registry, "strata_db_ping", json!({}));
@@ -1122,7 +1122,7 @@ fn test_read_only_allows_reads() {
 #[test]
 fn test_read_only_rejects_state_write() {
     let mut session = read_only_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     let err = call_tool_err(
         &mut session,
@@ -1137,7 +1137,7 @@ fn test_read_only_rejects_state_write() {
 #[test]
 fn test_read_only_rejects_event_append() {
     let mut session = read_only_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     let err = call_tool_err(
         &mut session,
@@ -1156,7 +1156,7 @@ fn test_read_only_rejects_event_append() {
 #[test]
 fn test_unknown_tool() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     let err = call_tool_err(&mut session, &registry, "strata_nonexistent", json!({}));
     let err_str = format!("{}", err);
@@ -1166,7 +1166,7 @@ fn test_unknown_tool() {
 #[test]
 fn test_missing_required_arg() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     let err = call_tool_err(&mut session, &registry, "strata_kv_put", json!({}));
     let err_str = format!("{}", err);
@@ -1176,7 +1176,7 @@ fn test_missing_required_arg() {
 #[test]
 fn test_branch_not_found() {
     let mut session = test_session();
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     let err = call_tool_err(
         &mut session,
@@ -1194,22 +1194,32 @@ fn test_branch_not_found() {
 
 #[test]
 fn test_tool_count() {
-    let registry = ToolRegistry::new();
-    let tools = registry.tools();
-
-    // After adding time_range + configure_model: 63 total
+    // Developer registry: 74 tools across 17 categories (used by integration tests)
+    let dev_registry = ToolRegistry::developer();
+    let dev_tools = dev_registry.tools();
     assert_eq!(
-        tools.len(),
-        63,
-        "Expected 63 tools, got {}. Tools: {:?}",
-        tools.len(),
-        tools.iter().map(|t| &t.name).collect::<Vec<_>>()
+        dev_tools.len(),
+        74,
+        "Expected 74 developer tools, got {}. Tools: {:?}",
+        dev_tools.len(),
+        dev_tools.iter().map(|t| &t.name).collect::<Vec<_>>()
+    );
+
+    // Default registry: 8 agent-friendly tools (exposed via MCP)
+    let agent_registry = ToolRegistry::new();
+    let agent_tools = agent_registry.tools();
+    assert_eq!(
+        agent_tools.len(),
+        8,
+        "Expected 8 agent tools, got {}. Tools: {:?}",
+        agent_tools.len(),
+        agent_tools.iter().map(|t| &t.name).collect::<Vec<_>>()
     );
 }
 
 #[test]
 fn test_all_tools_have_required_fields() {
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
 
     for tool in registry.tools() {
         assert!(!tool.name.is_empty(), "Tool name should not be empty");
@@ -1221,7 +1231,7 @@ fn test_all_tools_have_required_fields() {
 
 #[test]
 fn test_no_duplicate_tool_names() {
-    let registry = ToolRegistry::new();
+    let registry = ToolRegistry::developer();
     let tools = registry.tools();
     let mut names: Vec<&str> = tools.iter().map(|t| t.name.as_str()).collect();
     let original_count = names.len();

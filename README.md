@@ -2,9 +2,7 @@
 
 MCP (Model Context Protocol) server for [Strata](https://github.com/strata-ai-labs/strata-core) database.
 
-Exposes 74 tools for AI agents to interact with Strata's six data primitives
-(KV Store, Event Log, State Cell, JSON Store, Vector Store, Branches),
-plus embedding, inference, model management, and durability diagnostics.
+Designed for AI agents. 8 intent-driven tools by default — store, recall, search, forget, log, branch, history, status. No database concepts exposed.
 
 ## Installation
 
@@ -18,24 +16,11 @@ cargo build --release
 
 The binary will be at `target/release/strata-mcp`.
 
-## Usage
+## Quick Start
 
 ### With Claude Desktop
 
 Add to your `claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "strata": {
-      "command": "/path/to/strata-mcp",
-      "args": ["--db", "/path/to/your/data"]
-    }
-  }
-}
-```
-
-With auto-embedding enabled (downloads MiniLM-L6-v2 on first use):
 
 ```json
 {
@@ -48,20 +33,39 @@ With auto-embedding enabled (downloads MiniLM-L6-v2 on first use):
 }
 ```
 
-For ephemeral/testing use (in-memory, no persistence):
+This gives the AI agent 8 tools with automatic semantic search. That's it.
+
+### With Claude Code
+
+Add to your `.mcp.json`:
 
 ```json
 {
   "mcpServers": {
     "strata": {
       "command": "/path/to/strata-mcp",
-      "args": ["--cache"]
+      "args": ["--db", ".strata", "--auto-embed"]
     }
   }
 }
 ```
 
-### Command Line Options
+### In-Memory (Ephemeral)
+
+For testing without persistence:
+
+```json
+{
+  "mcpServers": {
+    "strata": {
+      "command": "/path/to/strata-mcp",
+      "args": ["--cache", "--auto-embed"]
+    }
+  }
+}
+```
+
+## Command Line Options
 
 ```
 strata-mcp [OPTIONS]
@@ -71,211 +75,68 @@ Options:
   --cache           Use an in-memory database (no persistence)
   --read-only       Open database in read-only mode
   --auto-embed      Enable automatic text embedding for semantic search
-  -v, --verbose     Enable debug logging to stderr
+-v, --verbose     Enable debug logging to stderr
   -h, --help        Print help
   -V, --version     Print version
 ```
 
-### Read-Only Mode
+## Agent Tools (default — 8 tools)
 
-When `--read-only` is used, all write operations are rejected with an `ACCESS_DENIED` error.
-Read operations (get, list, search, info, etc.) work normally. This is useful for
-sharing a database safely with AI agents that should only read data.
+These are the tools AI agents see. Intent-driven naming, no database internals exposed.
 
-## Tools (74 total)
+| Tool | Intent | Description |
+|------|--------|-------------|
+| `strata_store` | "Remember this" | Store data with a key. Auto-embeds text for semantic search. |
+| `strata_recall` | "What's stored here?" | Retrieve data by key. Supports time-travel via `as_of`. |
+| `strata_search` | "Find relevant things" | Natural language search across all data. Hybrid keyword + semantic. |
+| `strata_forget` | "Delete this" | Delete data by key. |
+| `strata_log` | "This happened" | Append an immutable event. Ordered, timestamped, grouped by type. |
+| `strata_branch` | "Work in isolation" | Create, switch, fork, merge, diff, delete branches. |
+| `strata_history` | "What changed?" | Version history for a key, or time range for the branch. |
+| `strata_status` | "What's going on?" | Database info, current branch, auto-embed state. |
 
-### Key-Value Store (8 tools)
-
-| Tool | Description |
-|------|-------------|
-| `strata_kv_put` | Store a key-value pair |
-| `strata_kv_get` | Get a value by key |
-| `strata_kv_delete` | Delete a key |
-| `strata_kv_list` | List keys with optional prefix filter |
-| `strata_kv_history` | Get version history for a key |
-| `strata_kv_put_many` | Batch store multiple key-value pairs |
-| `strata_kv_get_many` | Batch get multiple keys |
-| `strata_kv_delete_many` | Batch delete multiple keys |
-
-### JSON Document Store (5 tools)
-
-| Tool | Description |
-|------|-------------|
-| `strata_json_set` | Set a value at a JSONPath |
-| `strata_json_get` | Get a value at a JSONPath |
-| `strata_json_delete` | Delete a JSON document |
-| `strata_json_list` | List JSON document keys |
-| `strata_json_history` | Get version history |
-
-### Event Log (4 tools)
-
-| Tool | Description |
-|------|-------------|
-| `strata_event_append` | Append an event to the log |
-| `strata_event_get` | Get an event by sequence number |
-| `strata_event_list` | List events by type |
-| `strata_event_len` | Get total event count |
-
-### State Cell (7 tools)
-
-| Tool | Description |
-|------|-------------|
-| `strata_state_set` | Set a state cell value |
-| `strata_state_get` | Get a state cell value |
-| `strata_state_delete` | Delete a state cell |
-| `strata_state_init` | Initialize if not exists |
-| `strata_state_cas` | Compare-and-swap update |
-| `strata_state_list` | List state cell names |
-| `strata_state_history` | Get version history |
-
-### Vector Store (9 tools)
-
-| Tool | Description |
-|------|-------------|
-| `strata_vector_upsert` | Insert/update a vector |
-| `strata_vector_get` | Get a vector by key |
-| `strata_vector_delete` | Delete a vector |
-| `strata_vector_search` | Similarity search with optional filters |
-| `strata_vector_create_collection` | Create a collection |
-| `strata_vector_delete_collection` | Delete a collection |
-| `strata_vector_list_collections` | List all collections |
-| `strata_vector_stats` | Get collection statistics |
-| `strata_vector_batch_upsert` | Batch insert vectors |
-
-### Branch Management (9 tools)
-
-| Tool | Description |
-|------|-------------|
-| `strata_branch_create` | Create a new branch |
-| `strata_branch_get` | Get branch info |
-| `strata_branch_list` | List all branches |
-| `strata_branch_exists` | Check if branch exists |
-| `strata_branch_delete` | Delete a branch |
-| `strata_branch_fork` | Fork current branch |
-| `strata_branch_diff` | Diff two branches |
-| `strata_branch_merge` | Merge branches |
-| `strata_branch_switch` | Switch current branch |
-
-### Space Management (5 tools)
-
-| Tool | Description |
-|------|-------------|
-| `strata_space_list` | List spaces in branch |
-| `strata_space_create` | Create a space |
-| `strata_space_exists` | Check if space exists |
-| `strata_space_delete` | Delete a space |
-| `strata_space_switch` | Switch current space |
-
-### Transaction Control (5 tools)
-
-| Tool | Description |
-|------|-------------|
-| `strata_txn_begin` | Begin a transaction |
-| `strata_txn_commit` | Commit transaction |
-| `strata_txn_rollback` | Rollback transaction |
-| `strata_txn_info` | Get transaction info |
-| `strata_txn_active` | Check if transaction active |
-
-### Database Operations (5 tools)
-
-| Tool | Description |
-|------|-------------|
-| `strata_db_ping` | Check connectivity |
-| `strata_db_info` | Get database info |
-| `strata_db_flush` | Flush writes to disk |
-| `strata_db_compact` | Trigger compaction |
-| `strata_db_time_range` | Get available time range for the current branch |
-
-### Search (1 tool)
-
-| Tool | Description |
-|------|-------------|
-| `strata_search` | Cross-primitive search with ranked results (keyword or hybrid mode) |
-
-### Bundle Operations (3 tools)
-
-| Tool | Description |
-|------|-------------|
-| `strata_bundle_export` | Export a branch to a bundle file |
-| `strata_bundle_import` | Import a branch from a bundle file |
-| `strata_bundle_validate` | Validate a bundle file |
-
-### Retention (1 tool)
-
-| Tool | Description |
-|------|-------------|
-| `strata_retention_apply` | Apply retention policy to trim old versions |
-
-### Configuration (1 tool)
-
-| Tool | Description |
-|------|-------------|
-| `strata_configure_model` | Configure an inference model endpoint for intelligent search |
-
-### Embedding (3 tools)
-
-| Tool | Description |
-|------|-------------|
-| `strata_embed` | Embed a single text string into a dense vector |
-| `strata_embed_batch` | Embed multiple texts into vectors |
-| `strata_embed_status` | Get embedding pipeline status (pending, progress, idle) |
-
-### Inference (4 tools)
-
-| Tool | Description |
-|------|-------------|
-| `strata_generate` | Generate text using a locally loaded model |
-| `strata_tokenize` | Tokenize text into token IDs |
-| `strata_detokenize` | Convert token IDs back to text |
-| `strata_generate_unload` | Unload a model from memory |
-
-### Model Management (3 tools)
-
-| Tool | Description |
-|------|-------------|
-| `strata_models_list` | List available models from the registry |
-| `strata_models_pull` | Download a model by name |
-| `strata_models_local` | List locally downloaded models |
-
-### Durability (1 tool)
-
-| Tool | Description |
-|------|-------------|
-| `strata_durability_counters` | Get WAL durability counters (appends, syncs, bytes, latency) |
-
-## Session State
-
-The MCP server maintains session state that persists across tool calls:
-
-- **Current Branch**: Set with `strata_branch_switch`, defaults to `"default"`
-- **Current Space**: Set with `strata_space_switch`, defaults to `"default"`
-- **Transaction State**: Tracked via `strata_txn_*` tools
-
-All data operations use the current branch/space context automatically.
-
-## Time-Travel Queries
-
-Most read operations support an optional `as_of` parameter (microseconds since epoch)
-for querying historical data. Use `strata_db_time_range` to discover the available
-time range for the current branch.
-
-## Example Conversation
+### Example Conversation
 
 ```
 User: Store my preferences
-Agent: [calls strata_kv_put with key="preferences", value={"theme": "dark"}]
+Agent: [calls strata_store with key="preferences", value={"theme": "dark", "language": "en"}]
 
-User: Create a branch for experiments
-Agent: [calls strata_branch_create with branch_id="experiment"]
-Agent: [calls strata_branch_switch with branch="experiment"]
+User: Find anything about themes
+Agent: [calls strata_search with query="theme settings"]
+→ Returns: [{key: "preferences", score: 0.92, snippet: "theme: dark"}]
 
-User: Try a different theme setting
-Agent: [calls strata_kv_put with key="preferences", value={"theme": "light"}]
+User: Let me experiment with a new setup
+Agent: [calls strata_branch with action="fork", name="experiment"]
+Agent: [calls strata_branch with action="switch", name="experiment"]
+Agent: [calls strata_store with key="preferences", value={"theme": "light", "language": "fr"}]
 
-User: Actually, let's discard that and go back
-Agent: [calls strata_branch_switch with branch="default"]
-# Original preferences are intact
+User: Actually, go back to the original
+Agent: [calls strata_branch with action="switch", name="default"]
+→ Original preferences are intact
+
+User: What did preferences look like over time?
+Agent: [calls strata_history with key="preferences"]
+→ Returns all versions with timestamps
 ```
+
+### Why 8 Tools?
+
+Research across 26 MCP servers (Qdrant, Neon, Supabase, MongoDB, Mem0, etc.) shows:
+- **10 tools** = 100% tool selection accuracy
+- **30+ tools** = accuracy degrades
+- **Cursor** hard-limits at 40 MCP tools total across all servers
+
+Strata's 8 tools are modeled after Qdrant (2 tools, the gold standard for AI-friendliness), extended with branches and time-travel — Strata's unique differentiators.
+
+## Read-Only Mode
+
+When `--read-only` is used, all write operations are rejected with an `ACCESS_DENIED` error.
+This is useful for sharing a database safely with AI agents that should only read data.
+
+## Time-Travel
+
+Most read operations support an optional `as_of` parameter (microseconds since epoch)
+for querying historical data. Use `strata_history` to discover the available time range.
 
 ## Protocol
 
@@ -293,7 +154,7 @@ Supported methods:
 # Run tests
 cargo test
 
-# Run with verbose logging
+# Run with in-memory database
 ./target/release/strata-mcp --cache -v
 
 # Test with a JSON-RPC request

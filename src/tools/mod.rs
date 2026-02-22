@@ -1,24 +1,29 @@
-//! Tool registry and category definitions.
+//! Tool registry and dispatch.
 //!
-//! Provides the infrastructure for registering and dispatching MCP tools.
+//! Exposes 8 intent-driven tools for AI agents. The granular per-primitive tools
+//! (KV, JSON, State, Vector, etc.) are compiled for internal use and testing but
+//! are not registered in the MCP tool surface.
 
-pub mod branch;
-pub mod bundle;
-pub mod config;
-pub mod database;
-pub mod durability;
-pub mod embed;
-pub mod event;
-pub mod inference;
-pub mod json;
-pub mod kv;
-pub mod models;
-pub mod retention;
-pub mod search;
-pub mod space;
-pub mod state;
-pub mod txn;
-pub mod vector;
+pub mod agent;
+
+// Internal tool modules — compiled for tests, not exposed via MCP
+pub(crate) mod branch;
+pub(crate) mod bundle;
+pub(crate) mod config;
+pub(crate) mod database;
+pub(crate) mod durability;
+pub(crate) mod embed;
+pub(crate) mod event;
+pub(crate) mod inference;
+pub(crate) mod json;
+pub(crate) mod kv;
+pub(crate) mod models;
+pub(crate) mod retention;
+pub(crate) mod search;
+pub(crate) mod space;
+pub(crate) mod state;
+pub(crate) mod txn;
+pub(crate) mod vector;
 
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value as JsonValue};
@@ -29,7 +34,7 @@ use crate::session::McpSession;
 /// A tool definition for the MCP tools/list response.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ToolDef {
-    /// Tool name (e.g., "strata_kv_put")
+    /// Tool name (e.g., "strata_store")
     pub name: String,
     /// Tool description
     pub description: String,
@@ -49,17 +54,27 @@ impl ToolDef {
     }
 }
 
-/// Registry of all available tools.
+/// Registry of available MCP tools.
 pub struct ToolRegistry {
     tools: Vec<ToolDef>,
+    developer_mode: bool,
 }
 
 impl ToolRegistry {
-    /// Create a new registry with all tools registered.
+    /// Create the tool registry with the 8 agent-friendly tools.
     pub fn new() -> Self {
-        let mut tools = Vec::new();
+        Self {
+            tools: agent::tools(),
+            developer_mode: false,
+        }
+    }
 
-        // Register all tool categories
+    /// Create a registry with all 74 granular developer tools.
+    ///
+    /// Not exposed via the MCP CLI. Used for integration testing of individual
+    /// tool modules against the underlying Strata primitives.
+    pub fn developer() -> Self {
+        let mut tools = Vec::new();
         tools.extend(database::tools());
         tools.extend(kv::tools());
         tools.extend(state::tools());
@@ -77,8 +92,10 @@ impl ToolRegistry {
         tools.extend(inference::tools());
         tools.extend(models::tools());
         tools.extend(durability::tools());
-
-        Self { tools }
+        Self {
+            tools,
+            developer_mode: true,
+        }
     }
 
     /// Get all tool definitions.
@@ -93,7 +110,11 @@ impl ToolRegistry {
         name: &str,
         args: Map<String, JsonValue>,
     ) -> Result<JsonValue> {
-        // Route based on prefix
+        if !self.developer_mode {
+            return agent::dispatch(session, name, args);
+        }
+
+        // Developer dispatch — used by integration tests only
         if name.starts_with("strata_db_") {
             database::dispatch(session, name, args)
         } else if name.starts_with("strata_kv_") {
@@ -122,7 +143,10 @@ impl ToolRegistry {
             retention::dispatch(session, name, args)
         } else if name.starts_with("strata_embed") {
             embed::dispatch(session, name, args)
-        } else if name.starts_with("strata_generate") || name.starts_with("strata_tokenize") || name.starts_with("strata_detokenize") {
+        } else if name.starts_with("strata_generate")
+            || name.starts_with("strata_tokenize")
+            || name.starts_with("strata_detokenize")
+        {
             inference::dispatch(session, name, args)
         } else if name.starts_with("strata_models_") {
             models::dispatch(session, name, args)
