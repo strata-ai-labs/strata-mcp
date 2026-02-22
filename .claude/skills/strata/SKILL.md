@@ -10,11 +10,13 @@ description: >
 argument-hint: [action or question]
 ---
 
-# Strata Database
+# Strata
 
-Strata is a multi-primitive embedded database with built-in versioning, branching, time-travel, cross-primitive search, and local inference. One process, one data directory, zero configuration. It replaces the fragmented stack of Redis + SQLite + vector DBs with a single unified interface.
+Strata is a database built for AI agents. It provides persistent, structured state with zero configuration — no schemas, no migrations, no connection strings. You connect and immediately have a fully functional persistence layer through 8 intent-driven tools.
 
-## Tools at a Glance
+Traditional databases were designed for human developers writing SQL, managing schemas, and configuring infrastructure. Agents don't need that. Agents need to store structured state, find things by meaning, experiment safely, and never lose context. That's what Strata does.
+
+## Tools
 
 | Intent | Tool | What it does |
 |--------|------|--------------|
@@ -27,75 +29,76 @@ Strata is a multi-primitive embedded database with built-in versioning, branchin
 | See what changed | `strata_history` | View all versions of a key, or discover the time range |
 | Orient yourself | `strata_status` | Get current branch, key count, auto-embed state |
 
-## Key Capabilities
+## What Makes This Different
 
-- **Versioning**: Every write is versioned. Nothing is ever truly lost.
-- **Time-travel**: Read any key as it was at any past timestamp via the `as_of` parameter on `strata_recall`.
-- **Branching**: Fork the entire database state, experiment freely, merge back or discard. Branches are instant copy-on-write snapshots.
-- **Cross-data search**: One `strata_search` query searches across all documents and events simultaneously.
-- **JSONPath**: Surgical updates to nested fields without overwriting entire documents. Use `path` on `strata_store` and `strata_recall`.
-- **Auto-embed**: When enabled, all text content is automatically indexed for semantic search — no manual embedding required.
+**Everything is versioned.** Every write creates a new version. Nothing is ever truly lost. You can read any key as it was at any past point in time by passing `as_of` to `strata_recall`.
 
-## When to Reach for Strata
+**Branching is built in.** Fork the entire database state before risky operations. If the experiment works, merge it back. If it doesn't, delete the branch. No data was harmed.
 
-- **Persisting structured data across sessions** → `strata_store` — versioned, searchable, branchable
-- **Storing nested/hierarchical documents** → `strata_store` with `path` for targeted reads/writes
-- **Finding data without knowing the exact key** → `strata_search` with natural language
-- **Recording actions, decisions, or audit trails** → `strata_log` — immutable, ordered, typed events
-- **Experimenting safely with data** → `strata_branch` fork/merge workflow
-- **Understanding how data evolved** → `strata_history` + time-travel via `as_of`
-- **Orienting at session start** → `strata_status` to see current branch and data state
+**Search by meaning, not just by key.** When you don't remember the exact key, describe what you're looking for in natural language. `strata_search` searches across all documents and events simultaneously using keyword matching and, when auto-embed is enabled, semantic similarity.
 
-## Common Patterns
+**Structured data with surgical updates.** Store any JSON value. Use JSONPath to read or update specific nested fields without overwriting the whole document.
 
-### Store and recall structured data
+**Immutable event log.** Record actions, decisions, observations, and errors as permanent, ordered, timestamped events that can never be modified or deleted.
+
+## When to Use Each Tool
+
+- **Persisting state across sessions** → `strata_store` — store structured JSON, get it back with `strata_recall`
+- **Updating part of a document** → `strata_store` with `path` (e.g. `$.settings.theme`) to change one field
+- **Finding data without knowing the key** → `strata_search` with natural language
+- **Recording what happened** → `strata_log` for actions, decisions, errors — anything that should never be rewritten
+- **Trying something risky** → `strata_branch` fork → experiment → merge if good, delete if bad
+- **Understanding how state evolved** → `strata_history` for version history, `strata_recall` with `as_of` to read past state
+- **Starting a session** → `strata_status` to see what branch you're on and what data exists
+
+## Patterns
+
+### Persist and recall structured state
 
 ```
-strata_store(key="user:alice", value={"name": "Alice", "role": "admin", "settings": {"theme": "dark"}})
+strata_store(key="user:alice", value={"name": "Alice", "role": "admin", "prefs": {"theme": "dark"}})
 strata_recall(key="user:alice")
-strata_recall(key="user:alice", path="$.settings.theme")
+strata_recall(key="user:alice", path="$.prefs.theme")
 ```
 
-### Update a nested field without overwriting
+### Update a single field
 
 ```
-strata_store(key="user:alice", path="$.settings.theme", value="light")
+strata_store(key="user:alice", path="$.prefs.theme", value="light")
 ```
 
-### Search with natural language
+### Find data by meaning
 
 ```
-strata_search(query="admin users with dark theme")
-strata_search(query="error logs from today", k=5)
+strata_search(query="admin users")
+strata_search(query="recent errors in auth service", k=5)
 ```
 
-### Safe experimentation with branches
+### Experiment safely
 
 ```
 strata_branch(action="fork", name="experiment")
 strata_branch(action="switch", name="experiment")
-# ... make changes ...
+# ... make changes, test things ...
 strata_branch(action="diff", compare="default")
-# If good:
+# Keep the results:
 strata_branch(action="switch", name="default")
 strata_branch(action="merge", source="experiment")
-# If bad:
+# Or discard:
 strata_branch(action="switch", name="default")
 strata_branch(action="delete", name="experiment")
 ```
 
-### Track decisions with the event log
+### Record decisions and events
 
 ```
-strata_log(event="decision", data={"choice": "use PostgreSQL", "reason": "team familiarity", "alternatives": ["MySQL", "SQLite"]})
+strata_log(event="decision", data={"choice": "PostgreSQL", "reason": "team familiarity"})
 strata_log(event="error", data={"message": "connection timeout", "service": "auth"})
 ```
 
-### Time-travel to see past state
+### Time-travel
 
 ```
 strata_history(key="config")
-# Returns all versions with timestamps
 strata_recall(key="config", as_of=1700000700000000)
-# Returns the value as it was at that timestamp
 ```
