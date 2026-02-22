@@ -1,27 +1,22 @@
 # strata-mcp
 
-MCP (Model Context Protocol) server for [Strata](https://github.com/strata-systems/strata-core) database.
+MCP (Model Context Protocol) server for [Strata](https://github.com/strata-ai-labs/strata-core) database.
 
-Exposes 61 tools for AI agents to interact with Strata's six data primitives:
-KV Store, Event Log, State Cell, JSON Store, Vector Store, and Branches.
+Exposes 74 tools for AI agents to interact with Strata's six data primitives
+(KV Store, Event Log, State Cell, JSON Store, Vector Store, Branches),
+plus embedding, inference, model management, and durability diagnostics.
 
 ## Installation
 
 ### From Source
 
 ```bash
-git clone https://github.com/strata-systems/strata-mcp.git
+git clone https://github.com/strata-ai-labs/strata-mcp.git
 cd strata-mcp
 cargo build --release
 ```
 
 The binary will be at `target/release/strata-mcp`.
-
-### From crates.io
-
-```bash
-cargo install strata-mcp
-```
 
 ## Usage
 
@@ -35,6 +30,19 @@ Add to your `claude_desktop_config.json`:
     "strata": {
       "command": "/path/to/strata-mcp",
       "args": ["--db", "/path/to/your/data"]
+    }
+  }
+}
+```
+
+With auto-embedding enabled (downloads MiniLM-L6-v2 on first use):
+
+```json
+{
+  "mcpServers": {
+    "strata": {
+      "command": "/path/to/strata-mcp",
+      "args": ["--db", "/path/to/your/data", "--auto-embed"]
     }
   }
 }
@@ -74,7 +82,7 @@ When `--read-only` is used, all write operations are rejected with an `ACCESS_DE
 Read operations (get, list, search, info, etc.) work normally. This is useful for
 sharing a database safely with AI agents that should only read data.
 
-## Tools (61 total)
+## Tools (74 total)
 
 ### Key-Value Store (8 tools)
 
@@ -138,7 +146,7 @@ sharing a database safely with AI agents that should only read data.
 
 | Tool | Description |
 |------|-------------|
-| `strata_branch_create` | Create a new branch (with optional metadata) |
+| `strata_branch_create` | Create a new branch |
 | `strata_branch_get` | Get branch info |
 | `strata_branch_list` | List all branches |
 | `strata_branch_exists` | Check if branch exists |
@@ -168,7 +176,7 @@ sharing a database safely with AI agents that should only read data.
 | `strata_txn_info` | Get transaction info |
 | `strata_txn_active` | Check if transaction active |
 
-### Database Operations (4 tools)
+### Database Operations (5 tools)
 
 | Tool | Description |
 |------|-------------|
@@ -176,12 +184,13 @@ sharing a database safely with AI agents that should only read data.
 | `strata_db_info` | Get database info |
 | `strata_db_flush` | Flush writes to disk |
 | `strata_db_compact` | Trigger compaction |
+| `strata_db_time_range` | Get available time range for the current branch |
 
 ### Search (1 tool)
 
 | Tool | Description |
 |------|-------------|
-| `strata_search` | Cross-primitive search with ranked results |
+| `strata_search` | Cross-primitive search with ranked results (keyword or hybrid mode) |
 
 ### Bundle Operations (3 tools)
 
@@ -197,15 +206,58 @@ sharing a database safely with AI agents that should only read data.
 |------|-------------|
 | `strata_retention_apply` | Apply retention policy to trim old versions |
 
+### Configuration (1 tool)
+
+| Tool | Description |
+|------|-------------|
+| `strata_configure_model` | Configure an inference model endpoint for intelligent search |
+
+### Embedding (3 tools)
+
+| Tool | Description |
+|------|-------------|
+| `strata_embed` | Embed a single text string into a dense vector |
+| `strata_embed_batch` | Embed multiple texts into vectors |
+| `strata_embed_status` | Get embedding pipeline status (pending, progress, idle) |
+
+### Inference (4 tools)
+
+| Tool | Description |
+|------|-------------|
+| `strata_generate` | Generate text using a locally loaded model |
+| `strata_tokenize` | Tokenize text into token IDs |
+| `strata_detokenize` | Convert token IDs back to text |
+| `strata_generate_unload` | Unload a model from memory |
+
+### Model Management (3 tools)
+
+| Tool | Description |
+|------|-------------|
+| `strata_models_list` | List available models from the registry |
+| `strata_models_pull` | Download a model by name |
+| `strata_models_local` | List locally downloaded models |
+
+### Durability (1 tool)
+
+| Tool | Description |
+|------|-------------|
+| `strata_durability_counters` | Get WAL durability counters (appends, syncs, bytes, latency) |
+
 ## Session State
 
 The MCP server maintains session state that persists across tool calls:
 
-- **Current Branch**: Set with `strata_branch_switch`, defaults to "default"
-- **Current Space**: Set with `strata_space_switch`, defaults to "default"
+- **Current Branch**: Set with `strata_branch_switch`, defaults to `"default"`
+- **Current Space**: Set with `strata_space_switch`, defaults to `"default"`
 - **Transaction State**: Tracked via `strata_txn_*` tools
 
 All data operations use the current branch/space context automatically.
+
+## Time-Travel Queries
+
+Most read operations support an optional `as_of` parameter (microseconds since epoch)
+for querying historical data. Use `strata_db_time_range` to discover the available
+time range for the current branch.
 
 ## Example Conversation
 
@@ -230,10 +282,10 @@ Agent: [calls strata_branch_switch with branch="default"]
 The server implements [MCP](https://modelcontextprotocol.io/) over JSON-RPC 2.0 on stdin/stdout.
 
 Supported methods:
-- `initialize` - Initialize the server
-- `tools/list` - List available tools
-- `tools/call` - Execute a tool
-- `ping` - Health check
+- `initialize` — Initialize the server
+- `tools/list` — List available tools
+- `tools/call` — Execute a tool
+- `ping` — Health check
 
 ## Development
 
