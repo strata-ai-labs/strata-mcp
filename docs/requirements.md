@@ -6,11 +6,9 @@
 **Reference pattern:** Neon's `npx neon@latest init`
 (https://neon.com/docs/get-started/with-an-agent)
 
-> **Naming is provisional throughout.** A product-wide rename is under
-> consideration, and the npm names are contested (`strata` requires a dispute;
-> `strata-db` is the available fallback). This document uses `strata` as a
-> placeholder in package names, bin names, and config keys; every occurrence is a
-> find-and-replace site, and nothing in the requirements depends on the final name.
+> **npm package name:** `strata`, pending the npm dispute for the abandoned 2013
+> package of that name; `strata-db` is the secured fallback if the dispute fails.
+> Everything else in this document is name-final.
 
 ---
 
@@ -124,9 +122,10 @@ payoff belongs to the extension and CLI.
   exit codes are meaningful; output is line-oriented and parseable; `--json`
   emits a machine-readable result. An agent running `npx strata init --yes`
   mid-task must succeed or fail atomically and legibly.
-- **AR-6 — Rename tolerance.** The package name, bin name, and entry name
-  (`strata`) are constants in exactly one module; the naming decision lands as a
-  one-module change plus republish.
+- **AR-6 — Package-name contingency.** The npm package name is the one unsettled
+  name (dispute pending; `strata-db` fallback). It lives in exactly one module,
+  so the dispute outcome lands as a one-line change plus republish. Bin name,
+  config entry name, and everything user-facing are `strata`, final.
 - **AR-7 — Toolchain.** TypeScript, Node 18+, zero runtime dependencies (dev
   dependencies unrestricted); single-purpose bin; no postinstall scripts.
 
@@ -182,8 +181,8 @@ payoff belongs to the extension and CLI.
   File in strata-core when F1 lands.
 - **Agent-skills repo** — blocks F5; founding decision pending.
 - **The curl installer** (tier-1 distribution) — AR-3's non-Homebrew install path.
-- **The naming decision** — gates the npm publish name and dispute strategy
-  (owner: founder).
+- **The npm name dispute** (owner: founder) — gates the publish name;
+  `strata-db` is the fallback if it fails.
 
 ## 8. Open questions
 
